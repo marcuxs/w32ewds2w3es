@@ -1,28 +1,27 @@
-# ---------- Etapa 1: Build ----------
+# Etapa de build
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copia os arquivos necessários
-COPY package*.json ./
-COPY tsconfig.json ./
+# Instala pnpm
+RUN npm install -g pnpm
+
+# Copia os arquivos do projeto
 COPY . .
 
-# Instala dependências
-RUN npm install --legacy-peer-deps
+# Instala dependências ignorando workspaces ausentes
+RUN pnpm install --ignore-workspace-root-check --filter ./...
 
 # Compila o código TypeScript
-RUN npm run build
+RUN pnpm run build
 
-# ---------- Etapa 2: Execução ----------
+# Etapa final (para produção)
 FROM node:20-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/packages/mcp-server-supabase/dist ./dist
-COPY package*.json ./
-
-RUN npm install --omit=dev --legacy-peer-deps
+# Copia apenas os arquivos necessários da etapa anterior
+COPY --from=builder /app /app
 
 EXPOSE 5050
 
