@@ -3,14 +3,14 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Instala pnpm
-RUN npm install -g pnpm
+# Instala versão compatível do pnpm (v8)
+RUN npm install -g pnpm@8
 
-# Copia os arquivos do projeto
+# Copia todos os arquivos do projeto
 COPY . .
 
-# Instala dependências ignorando workspaces ausentes
-RUN pnpm install --ignore-workspace-root-check --filter ./...
+# Instala dependências (sem exigir todos os workspaces)
+RUN pnpm install --ignore-workspace --filter . --prod=false
 
 # Compila o código TypeScript
 RUN pnpm run build
