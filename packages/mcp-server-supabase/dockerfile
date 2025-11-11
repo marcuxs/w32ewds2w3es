@@ -11,7 +11,8 @@ RUN apk add --no-cache python3 make g++ \
 COPY . .
 
 # Instala dependências do workspace completo
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
+
 
 # Compila o pacote específico do MCP Server Supabase
 RUN pnpm --filter @supabase/mcp-server-supabase run build
