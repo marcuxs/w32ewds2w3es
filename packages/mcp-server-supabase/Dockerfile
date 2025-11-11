@@ -3,26 +3,26 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Instala versão compatível do pnpm (v8)
-RUN npm install -g pnpm@8
+# Instala dependências básicas do sistema
+RUN apk add --no-cache python3 make g++ \
+    && npm install -g pnpm@8
 
-# Copia todos os arquivos do projeto
+# Copia tudo (inclui pnpm-workspace.yaml e todos os pacotes)
 COPY . .
 
-# Instala dependências (sem exigir todos os workspaces)
-RUN pnpm install --ignore-workspace --filter . --prod=false
+# Instala dependências do workspace completo
+RUN pnpm install --frozen-lockfile
 
-# Compila o código TypeScript
-RUN pnpm run build
+# Compila o pacote específico do MCP Server Supabase
+RUN pnpm --filter @supabase/mcp-server-supabase run build
 
-# Etapa final (para produção)
+# Etapa final (somente o que precisamos para rodar)
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Copia apenas os arquivos necessários da etapa anterior
-COPY --from=builder /app /app
+COPY --from=builder /app/packages/mcp-server-supabase/dist ./dist
+COPY --from=builder /app/packages/mcp-server-supabase/package.json ./
 
 EXPOSE 5050
-
 CMD ["node", "dist/index.js"]
