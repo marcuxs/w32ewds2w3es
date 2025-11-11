@@ -1,34 +1,24 @@
-
 # ---------- Etapa 1: Build ----------
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
-# Copia apenas os arquivos essenciais primeiro
+# Copia arquivos principais
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages ./packages
 
-# Instala pnpm
+# Instala pnpm e dependências
 RUN npm install -g pnpm
-
-# Instala dependências
 RUN pnpm install --frozen-lockfile
 
-# Builda todos os pacotes (gera dist/)
-RUN pnpm build
+# Faz o build (gera dist/)
+RUN pnpm run build
 
 # ---------- Etapa 2: Execução ----------
-FROM node:20-alpine
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copia os artefatos do builder
+# Copia apenas o necessário da etapa anterior
 COPY --from=builder /app /app
 
-# Instala pnpm novamente
-RUN npm install -g pnpm
-
-# Define a porta padrão
 EXPOSE 3000
-
-# Executa o servidor Supabase MCP
 CMD ["node", "packages/mcp-server-supabase/dist/index.js"]
